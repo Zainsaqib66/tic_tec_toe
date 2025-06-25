@@ -1,0 +1,706 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tic-Tac-Toe Multiplayer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #667eea, #764ba2);
+      --panel: rgba(255, 255, 255, 0.1);
+      --text: #fff;
+      --accent1: #7dd3fc;
+      --accent2: #f472b6;
+      --cell: rgba(255, 255, 255, 0.15);
+      --win: linear-gradient(135deg, #facc15, #fcd34d);
+      --shadow: rgba(0, 0, 0, 0.25);
+      --tr: 0.25s ease;
+      --gap: 0.5rem;
+      --radius: 0.4rem;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg) fixed;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.light {
+      --bg: #f4f6fa;
+      --panel: rgba(0, 0, 0, 0.05);
+      --text: #1e2430;
+      --shadow: rgba(0, 0, 0, 0.1);
+    }
+
+    #container {
+      width: 360px;
+      max-width: 360px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px var(--shadow);
+      padding: var(--gap) var(--gap) 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: var(--gap);
+      text-align: center;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--gap);
+    }
+
+    .top-bar select,
+    .top-bar button {
+      appearance: none;
+      padding: 0.3rem 0.6rem;
+      background: var(--cell);
+      color: var(--text);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      transition: background var(--tr);
+    }
+
+    .top-bar select:hover,
+    .top-bar button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* make the “3×3/4×4” selector text black */
+    #gridSelect,
+    #gridSelect option {
+      color: #000;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      margin: 0.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform var(--tr), box-shadow var(--tr);
+    }
+
+    .btn.gradient {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #1e2430;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn.gradient:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+    }
+
+    .btn.soft {
+      background: var(--cell);
+      color: var(--text);
+    }
+
+    .btn.soft:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    #status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-height: 1.2em;
+      margin: var(--gap) 0;
+      text-align: center;
+    }
+
+    #timer {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    #board {
+      width: 100%;
+      display: grid;
+      gap: 0.4rem;
+      margin-bottom: var(--gap);
+      visibility: hidden;
+      padding-bottom: var(--gap);
+    }
+
+    .cell {
+      background: var(--cell);
+      aspect-ratio: 1;
+      border-radius: var(--radius);
+      box-shadow: 0 3px 8px var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: transparent;
+      cursor: pointer;
+      transition: background var(--tr), transform var(--tr);
+    }
+
+    .cell.X {
+      color: var(--accent1);
+    }
+
+    .cell.O {
+      color: var(--accent2);
+    }
+
+    .cell:hover {
+      transform: translateY(-1px);
+    }
+
+    .cell.win {
+      background: var(--win) !important;
+      color: #1e2430 !important;
+      animation: glow 0.8s infinite alternate;
+      box-shadow: 0 0 12px var(--win);
+    }
+
+    @keyframes glow {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.05);
+      }
+    }
+
+    .chat-container {
+      width: 100%;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: var(--gap);
+    }
+
+    .messages {
+      width: 100%;
+      height: 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 0.3rem;
+    }
+
+    .message {
+      background: var(--cell);
+      padding: 0.3rem 0.6rem;
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+      animation: fade-in 0.2s, fade-out 0.2s 2.8s forwards;
+    }
+
+    .message.you {
+      background: rgba(255, 255, 255, 0.25);
+      font-weight: 600;
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fade-out {
+      to {
+        opacity: 0;
+      }
+    }
+
+    .chat-input {
+      width: 100%;
+      display: flex;
+      gap: 0.3rem;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.3rem;
+      border: none;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      font-size: 0.75rem;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .dialog {
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      padding: var(--gap);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 20px var(--shadow);
+      text-align: center;
+      width: 90%;
+      max-width: 280px;
+    }
+
+    .dialog input {
+      width: 100%;
+      padding: 0.3rem;
+      margin-top: 0.3rem;
+      border: none;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Authentication Modal -->
+  <div id="authModal" class="modal">
+    <div class="dialog">
+      <h2 id="authTitle">Login</h2>
+      <p id="authError" style="color:#f66;min-height:1.2em;"></p>
+      <input id="authUser" placeholder="Username" />
+      <input id="authPass" type="password" placeholder="Password" />
+      <button id="authSubmit" class="btn gradient">Submit</button>
+      <p style="margin-top:1rem;">
+        <a href="#" id="toggleAuth">Register</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Main UI -->
+  <div id="container">
+    <h1>Tic-Tac-Toe</h1>
+    <div class="top-bar">
+      <select id="gridSelect">
+        <option value="3">3×3</option>
+        <option value="4">4×4</option>
+      </select>
+      <button id="settingsBtn">⚙️</button>
+    </div>
+    <button id="joinBtn" class="btn gradient">Join Game</button>
+    <button id="exitBtn" class="btn gradient hide">Exit Game</button>
+    <div id="status"></div>
+    <div id="timer" class="hide"></div>
+    <div id="board"></div>
+
+    <div id="chatContainer" class="chat-container hide">
+      <div id="messages" class="messages"></div>
+      <div class="chat-input">
+        <input id="chatInput" placeholder="Type a message…" />
+        <button id="sendBtn" class="btn gradient">Send</button>
+      </div>
+    </div>
+
+    <button id="rematchBtn" class="btn gradient hide">Rematch</button>
+    <button id="backBtn" class="btn soft hide">Back</button>
+  </div>
+
+  <!-- Other Modals -->
+  <div id="waitingModal" class="modal hide">
+    <div class="dialog">
+      <p>🤝 Finding opponent…</p>
+      <button id="cancelWait" class="btn soft">Back</button>
+    </div>
+  </div>
+  <div id="timeoutModal" class="modal hide">
+    <div class="dialog">
+      <p>😢 Can't find opponent</p>
+      <button id="timeoutBack" class="btn soft">Back</button>
+    </div>
+  </div>
+  <div id="rematchModal" class="modal hide">
+    <div class="dialog" id="rematchContent"></div>
+  </div>
+  <div id="exitModal" class="modal hide">
+    <div class="dialog">
+      <p>Are you sure?</p>
+      <button id="exitYes" class="btn gradient">Yes</button>
+      <button id="exitNo" class="btn soft">No</button>
+    </div>
+  </div>
+  <div id="leftModal" class="modal hide">
+    <div class="dialog">
+      <p id="leftMsg"></p>
+      <button id="leftBack" class="btn soft">Back</button>
+    </div>
+  </div>
+  <div id="settingsModal" class="modal hide">
+    <div class="dialog">
+      <h3>Settings</h3>
+      <label><input type="checkbox" id="darkToggle" /> Dark Mode</label><br />
+      <label><input type="checkbox" id="soundToggle" checked /> Sound</label><br />
+      <button id="logoutBtn" class="btn gradient">Logout</button>
+      <button id="settingsClose" class="btn soft">Close</button>
+    </div>
+  </div>
+
+  <!-- Sounds & Socket.IO -->
+  <audio id="moveSnd" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa83b5.mp3"></audio>
+  <audio id="winSnd" src="https://cdn.pixabay.com/audio/2022/10/16/audio_12cb0a6972.mp3"></audio>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Element refs
+    const authModal = document.getElementById("authModal");
+    const authTitle = document.getElementById("authTitle");
+    const authError = document.getElementById("authError");
+    const authUser = document.getElementById("authUser");
+    const authPass = document.getElementById("authPass");
+    const authSubmit = document.getElementById("authSubmit");
+    const toggleAuth = document.getElementById("toggleAuth");
+    const joinBtn = document.getElementById("joinBtn");
+    const exitBtn = document.getElementById("exitBtn");
+    const rematchBtn = document.getElementById("rematchBtn");
+    const backBtn = document.getElementById("backBtn");
+    const gridSelect = document.getElementById("gridSelect");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const boardDiv = document.getElementById("board");
+    const statusDiv = document.getElementById("status");
+    const timerDiv = document.getElementById("timer");
+    const chatContainer = document.getElementById("chatContainer");
+    const messagesDiv = document.getElementById("messages");
+    const chatInput = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const waitingModal = document.getElementById("waitingModal");
+    const cancelWait = document.getElementById("cancelWait");
+    const timeoutModal = document.getElementById("timeoutModal");
+    const timeoutBack = document.getElementById("timeoutBack");
+    const rematchModal = document.getElementById("rematchModal");
+    const rematchContent = document.getElementById("rematchContent");
+    const exitModal = document.getElementById("exitModal");
+    const exitYes = document.getElementById("exitYes");
+    const exitNo = document.getElementById("exitNo");
+    const leftModal = document.getElementById("leftModal");
+    const leftMsg = document.getElementById("leftMsg");
+    const leftBack = document.getElementById("leftBack");
+    const settingsModal = document.getElementById("settingsModal");
+    const darkToggle = document.getElementById("darkToggle");
+    const soundToggle = document.getElementById("soundToggle");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const settingsClose = document.getElementById("settingsClose");
+    const moveSnd = document.getElementById("moveSnd");
+    const winSnd = document.getElementById("winSnd");
+
+    let socket, username, roomId = null, gridSize = 3, myMark = null;
+    let gameOver = false, remAsked = false, isLogin = true;
+    let timeLeftX = 15, timeLeftO = 15, timerInterval;
+
+    const show = el => el.classList.remove("hide");
+    const hide = el => el.classList.add("hide");
+
+    // Authentication
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) { hide(authModal); initSocket(); }
+        else show(authModal);
+      } catch {
+        show(authModal);
+      }
+    }
+    toggleAuth.onclick = e => {
+      e.preventDefault();
+      isLogin = !isLogin;
+      authTitle.textContent = isLogin ? "Login" : "Register";
+      toggleAuth.textContent = isLogin ? "Register" : "Login";
+      authError.textContent = "";
+    };
+    authSubmit.onclick = async () => {
+      authError.textContent = "";
+      try {
+        const url = isLogin ? "/api/login" : "/api/register";
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: authUser.value.trim(), password: authPass.value })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        if (isLogin) {
+          username = data.username;
+          hide(authModal);
+          initSocket();
+        } else {
+          authError.textContent = "Registered! Please log in.";
+          isLogin = true;
+          authTitle.textContent = "Login";
+          toggleAuth.textContent = "Register";
+          authUser.value = ""; authPass.value = "";
+        }
+      } catch (e) {
+        authError.textContent = e.message;
+      }
+    };
+
+    // Chat display only when exit shown
+    function displayMessage(user, text) {
+      if (exitBtn.classList.contains("hide")) return;
+      messagesDiv.innerHTML = "";
+      let words = text.split(/\s+/);
+      if (words.length > 20) {
+        words = words.slice(0, 20);
+        text = words.join(" ") + "…";
+      }
+      const div = document.createElement("div");
+      div.className = "message" + (user === username ? " you" : "");
+      div.textContent = `${user}: ${text}`;
+      messagesDiv.appendChild(div);
+      const duration = Math.min(Math.max(words.length * 500, 2000), 15000);
+      if (displayMessage.timeoutId) clearTimeout(displayMessage.timeoutId);
+      displayMessage.timeoutId = setTimeout(() => div.style.opacity = 0, duration);
+    }
+
+    // Timer functions
+    function updateTimerDisplay() {
+      timerDiv.textContent = `⏱️  X: ${timeLeftX}s   O: ${timeLeftO}s`;
+    }
+    function clearTimer() {
+      clearInterval(timerInterval);
+    }
+    function startTimer(turn) {
+      clearTimer();
+      const mark = turn === 0 ? "X" : "O";
+      show(timerDiv);
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        if (mark === "X") timeLeftX--; else timeLeftO--;
+        if ((mark === "X" && timeLeftX < 0) || (mark === "O" && timeLeftO < 0)) {
+          clearTimer();
+          if (mark === myMark) socket.emit("exitGame", { room: roomId });
+        } else updateTimerDisplay();
+      }, 1000);
+    }
+
+    // Initialize socket.io and game events
+    function initSocket() {
+      socket = io({ autoConnect: false });
+      socket.connect();
+
+      socket.on("connect_error", err => {
+        if (err.message === "unauthorized") {
+          alert("Session expired");
+          location.reload();
+        }
+      });
+
+      socket.on("chatMessage", ({ username: u, message }) => displayMessage(u, message));
+      socket.on("waitingOpponent", () => { hide(joinBtn); show(waitingModal); });
+      socket.on("timeout", () => { hide(waitingModal); show(timeoutModal); });
+      socket.on("gotoMenu", showMenu); // <-- ensures all “go back to menu” flows work
+
+      socket.on("start", ({ room, grid, yourMark, turn }) => {
+        roomId = room; myMark = yourMark; gridSize = grid;
+        gameOver = false; remAsked = false;
+        hide(waitingModal);
+        showGame();
+        drawBoard(Array(gridSize * gridSize).fill(null));
+        updateStatus(turn);
+        timeLeftX = 15; timeLeftO = 15;
+        updateTimerDisplay();
+        startTimer(turn);
+      });
+
+      socket.on("update", ({ board, turn }) => {
+        drawBoard(board);
+        updateStatus(turn);
+        if (soundToggle.checked) moveSnd.play();
+        startTimer(turn);
+      });
+
+      socket.on("gameover", ({ winner, board, winLine }) => {
+        gameOver = true;
+        drawBoard(board, winLine);
+        statusDiv.innerHTML = winner
+          ? winner === myMark ? "<b>You win! 🎉</b>" : "<b>You lose 😢</b>"
+          : "<b>Draw!</b>";
+        if (soundToggle.checked) winSnd.play();
+        clearTimer(); hide(timerDiv);
+        setTimeout(() => { show(rematchBtn); show(backBtn); hide(exitBtn); }, 3000);
+      });
+
+      socket.on("opponentBack", () => {
+        hide(exitBtn);
+        leftMsg.textContent = "Opponent can't play right now";
+        show(leftModal);
+      });
+      socket.on("opponentExit", ({ board }) => {
+        drawBoard(board);
+        statusDiv.innerHTML = "<b>You won! Opponent left.</b>";
+        hide(rematchBtn); hide(exitBtn);
+        clearTimer(); hide(timerDiv);
+        show(leftModal);
+      });
+      socket.on("opponentLeft", () => {
+        hide(exitBtn);
+        leftMsg.textContent = "Opponent left the game";
+        clearTimer(); hide(timerDiv);
+        show(leftModal);
+      });
+
+      socket.on("opponentRematch", () => {
+        show(rematchModal);
+        rematchContent.innerHTML = `
+          <p>Opponent wants a rematch</p>
+          <button id="remYes" class="btn gradient">Yes</button>
+          <button id="remNo"  class="btn soft">No</button>`;
+        document.getElementById("remYes").onclick = () => {
+          socket.emit("rematchRequest", { room: roomId });
+          hide(rematchModal);
+        };
+        document.getElementById("remNo").onclick = () => {
+          socket.emit("backToMenu", { room: roomId });
+          hide(rematchModal);
+        };
+      });
+
+      socket.on("rematchStart", ({ yourMark, turn }) => {
+        myMark = yourMark; gameOver = false; remAsked = false;
+        hide(rematchModal);
+        showGame();
+        drawBoard(Array(gridSize * gridSize).fill(null));
+        updateStatus(turn);
+        timeLeftX = 15; timeLeftO = 15;
+        updateTimerDisplay();
+        startTimer(turn);
+      });
+
+      // UI actions
+      joinBtn.onclick = () => socket.emit("joinGame", { grid: +gridSelect.value });
+      cancelWait.onclick = () => { socket.emit("cancelWait", { grid: gridSize }); hide(waitingModal); };
+      timeoutBack.onclick = showMenu;
+      exitBtn.onclick = () => show(exitModal);
+      exitNo.onclick = () => hide(exitModal);
+      exitYes.onclick = () => { hide(exitModal); socket.emit("exitGame", { room: roomId }); };
+      backBtn.onclick = () => {
+        [waitingModal, timeoutModal, rematchModal, exitModal, leftModal].forEach(hide);
+        showMenu();
+        socket.emit("backToMenu", { room: roomId });
+      };
+      rematchBtn.onclick = () => {
+        if (remAsked) return;
+        remAsked = true;
+        socket.emit("rematchRequest", { room: roomId });
+        show(rematchModal);
+        rematchContent.innerHTML = "<p>Waiting for opponent…</p>";
+      };
+      settingsBtn.onclick = () => show(settingsModal);
+      settingsClose.onclick = () => hide(settingsModal);
+      darkToggle.onchange = () => {
+        document.body.classList.toggle("light", darkToggle.checked);
+        localStorage.setItem("tic-dark", JSON.stringify(darkToggle.checked));
+      };
+      soundToggle.onchange = () => localStorage.setItem("tic-sound", JSON.stringify(soundToggle.checked));
+      logoutBtn.onclick = async () => {
+        await fetch("/api/logout", { method: "POST" });
+        location.reload();
+      };
+
+      sendBtn.onclick = () => {
+        const msg = chatInput.value.trim();
+        if (!msg || !roomId) return;
+        socket.emit("chatMessage", { room: roomId, message: msg });
+        chatInput.value = "";
+      };
+      chatInput.addEventListener("keydown", e => { if (e.key === "Enter") sendBtn.click(); });
+      leftBack.onclick = () => {
+        [waitingModal, timeoutModal, rematchModal, exitModal, leftModal].forEach(hide);
+        showMenu();
+        socket.emit("backToMenu", { room: roomId });
+      };
+    }
+
+    function drawBoard(cells, winLine = []) {
+      boardDiv.innerHTML = "";
+      boardDiv.style.gridTemplateColumns = `repeat(${gridSize},1fr)`;
+      cells.forEach((v, i) => {
+        const c = document.createElement("div");
+        c.className = `cell ${v || ""}` + (winLine.includes(i) ? " win" : "");
+        c.textContent = v || "";
+        c.onclick = () => { if (!gameOver && !v) socket.emit("move", { room: roomId, idx: i }); };
+        boardDiv.appendChild(c);
+      });
+    }
+    function updateStatus(turn) {
+      const your = (turn === 0 && myMark === "X") || (turn === 1 && myMark === "O");
+      statusDiv.innerHTML = your ? "<b>Your turn</b>" : "<b>Opponent's turn</b>";
+    }
+    function showMenu() {
+      [waitingModal, timeoutModal, rematchModal, exitModal, leftModal].forEach(hide);
+      [exitBtn, rematchBtn, backBtn].forEach(hide);
+      hide(boardDiv); statusDiv.textContent = "";
+      hide(chatContainer); hide(timerDiv);
+      show(joinBtn); gridSelect.classList.remove("hide"); settingsBtn.classList.remove("hide");
+    }
+    function showGame() {
+      hide(joinBtn); show(exitBtn); hide(rematchBtn); hide(backBtn);
+      hide(settingsBtn); gridSelect.classList.add("hide");
+      boardDiv.classList.remove("hide"); boardDiv.style.visibility = "visible";
+      show(chatContainer); show(timerDiv);
+    }
+
+    // load prefs & start
+    darkToggle.checked = JSON.parse(localStorage.getItem("tic-dark") || "false");
+    soundToggle.checked = JSON.parse(localStorage.getItem("tic-sound") || "true");
+    document.body.classList.toggle("light", darkToggle.checked);
+
+    checkAuth();
+  </script>
+</body>
+
+</html>
